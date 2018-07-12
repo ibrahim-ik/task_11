@@ -60,6 +60,8 @@ def restaurant_detail(request, restaurant_id):
 
 def restaurant_create(request):
     form = RestaurantForm()
+    if request.user.is_anonymous:
+        return redirect('signin')
     if request.method == "POST":
         form = RestaurantForm(request.POST, request.FILES)
         if form.is_valid():
@@ -75,6 +77,8 @@ def restaurant_create(request):
 def item_create(request, restaurant_id):
     form = ItemForm()
     restaurant = Restaurant.objects.get(id=restaurant_id)
+    if (request.user != restaurant.owner) and (request.user.is_staff==False):
+        return redirect('no-access')
     if request.method == "POST":
         form = ItemForm(request.POST)
         if form.is_valid():
@@ -90,6 +94,8 @@ def item_create(request, restaurant_id):
 
 def restaurant_update(request, restaurant_id):
     restaurant_obj = Restaurant.objects.get(id=restaurant_id)
+    if (request.user != restaurant_obj.owner) and (request.user.is_staff==False):
+        return redirect('no-access')
     form = RestaurantForm(instance=restaurant_obj)
     if request.method == "POST":
         form = RestaurantForm(request.POST, request.FILES, instance=restaurant_obj)
@@ -104,5 +110,16 @@ def restaurant_update(request, restaurant_id):
 
 def restaurant_delete(request, restaurant_id):
     restaurant_obj = Restaurant.objects.get(id=restaurant_id)
+    if not request.user.is_staff:
+        return redirect('no-access')
     restaurant_obj.delete()
     return redirect('restaurant-list')
+
+def no_access(request):
+    return render(request, 'no_access.html')
+
+
+
+
+
+
